@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tienda de Camisetas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+    }
+
+    header {
+      background: #333;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      position: relative; /* Añadido para posicionar el icono del carrito */
+    }
+
+    /* ESTILO PARA EL ICONO DEL CARRITO */
+    .cart-icon {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: white;
+      /* Animación para el número de artículos */
+      animation: bounce 0.5s ease-in-out;
+    }
+
+    .cart-count {
+      background-color: #e91e63;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 7px;
+      font-size: 14px;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      display: none; /* Se oculta por defecto y se muestra con JS cuando hay productos */
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* ESTILO PARA EL CONTENEDOR DEL CARRITO LATERAL */
+    .cart-sidebar {
+      position: fixed;
+      top: 0;
+      right: -350px; /* Oculto por defecto */
+      width: 300px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      transition: right 0.3s ease-in-out;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto; /* Para que el contenido del carrito sea desplazable */
+      z-index: 1000;
+    }
+
+    .cart-sidebar.open {
+      right: 0; /* Se muestra cuando tiene la clase 'open' */
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .close-cart {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .cart-items {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px dotted #eee;
+    }
+
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      margin-right: 10px;
+      border-radius: 3px;
+    }
+
+    .item-details {
+      flex-grow: 1;
+    }
+
+    .item-details h4 {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .item-details p {
+      margin: 0;
+      font-size: 14px;
+      color: #777;
+    }
+
+    .remove-item {
+      background: none;
+      border: none;
+      color: #e91e63;
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+    }
+
+    .cart-total {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 15px;
+      background: #28a745; /* Color para el botón de pagar */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      margin-top: 20px;
+      text-decoration: none; /* En caso de que sea un <a> */
+    }
+
+    .checkout-btn:hover {
+      background: #218838;
+    }
+
+    /* Estilos existentes para productos y contenedor */
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .product {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin: 15px;
+      padding: 15px;
+      width: 250px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .product img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+
+    .product h3 {
+      margin: 10px 0;
+    }
+
+    .product p {
+      color: #555;
+      flex-grow: 1;
+    }
+
+    .price {
+      color: #e91e63;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .btn {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background: #c2185b;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #333;
+      color: white;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Sport Style</h1>
+    <p>Revive la era dorada. Tu camiseta, tu historia.</p>
+    <div class="cart-icon" id="cart-icon">
+      🛒 <span class="cart-count" id="cart-count">0</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="product">
+      <img src="https://img4.dhresource.com/webp/m/0x0/f3/albu/ys/t/26/7f449e7f-ce2c-4024-a57c-3881959c1945.jpg"
+           alt="Camiseta oversize Dinasty of Bulls (Imagen 1)"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "Dinasty of Bulls"</h3>
+      <p>Dinasty of Bulls.</p>
+      <div class="price" data-price="24.99">$24.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="1"
+              data-name="Camiseta Dinasty of Bulls"
+              data-price="24.99"
+              data-image="https://img4.dhresource.com/webp/m/0x0/f3/albu/ys/t/26/7f449e7f-ce2c-4024-a57c-3881959c1945.jpg">Agregar al carrito</button>
+    </div>
+
+    <div class="product">
+      <img src="https://i5.walmartimages.com/asr/f1661c70-a8a0-4316-bf8b-93643cebd195.f47af83a806088ed97bbc8e6e3372f6d.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF"
+           alt="Camiseta oversize Dinasty of Bulls (Imagen 2)"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "Rodzilla Unscripted"</h3>
+      <p>Rodzilla.</p>
+      <div class="price" data-price="29.99">$29.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="2"
+              data-name="Camiseta Dinasty of Bulls Negra"
+              data-price="29.99"
+              data-image="https://i5.walmartimages.com/asr/f1661c70-a8a0-4316-bf8b-93643cebd195.f47af83a806088ed97bbc8e6e3372f6d.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF">Agregar al carrito</button>
+    </div>
+
+    <div class="product">
+      <img src="https://i5.walmartimages.com/asr/aeae5c93-333d-4315-a815-05fd6b5f9de1.86f75689621342e7cf74e60df1444f49.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF"
+           alt="Camiseta oversize Dinasty of Bulls (Imagen 3)"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "Rodzilla THESOUL"</h3>
+      <p>Rodzilla.</p>
+      <div class="price" data-price="29.99">$29.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="3"
+              data-name="Camiseta Dinasty of Bulls Blanca"
+              data-price="29.99"
+              data-image="https://i5.walmartimages.com/asr/aeae5c93-333d-4315-a815-05fd6b5f9de1.86f75689621342e7cf74e60df1444f49.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF">Agregar al carrito</button>
+    </div>
+
+    <div class="product">
+      <img src="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/3c4c9882-7d16-42f9-855b-4f3b095a7230.jpg"
+           alt="Camiseta oversize Dinasty of Bulls (Imagen 4)"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "Not a brand"</h3>
+      <p>Not a brand.</p>
+      <div class="price" data-price="14.99">$14.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="4"
+              data-name="Camiseta Dinasty of Bulls Gris"
+              data-price="14.99"
+              data-image="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/3c4c9882-7d16-42f9-855b-4f3b095a7230.jpg">Agregar al carrito</button>
+    </div>
+
+    <div class="product">
+      <img src="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/9ef54978-1119-4b7f-89d9-353f070f6b45.jpg"
+           alt="Camiseta oversize 'The Worm'"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "The Worm"</h3>
+      <p>Rodzilla.</p>
+      <div class="price" data-price="29.99">$29.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="5"
+              data-name="Camiseta The Worm"
+              data-price="29.99"
+              data-image="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/9ef54978-1119-4b7f-89d9-353f070f6b45.jpg">Agregar al carrito</button>
+    </div>
+
+    <div class="product">
+      <img src="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/39a2a15f-4ef0-4c76-8756-b5d1195212f2.jpg"
+           alt="Camiseta oversize Dinasty of Bulls (Imagen 6)"
+           width="250"
+           height="250">
+      <h3>Camiseta oversize "THESOUL"</h3>
+      <p>TheSoul 4ever.</p>
+      <div class="price" data-price="14.99">$14.99</div>
+      <button class="btn add-to-cart-btn"
+              data-id="6"
+              data-name="Camiseta Dinasty of Bulls Roja"
+              data-price="14.99"
+              data-image="https://img4.dhresource.com/webp/m/0x0/f3/albu/km/t/16/39a2a15f-4ef0-4c76-8756-b5d1195212f2.jpg">Agregar al carrito</button>
+    </div>
+
+  </div> <div class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-header">
+      <h2>🛒 Carrito de Compras</h2>
+      <button class="close-cart" id="close-cart">&times;</button>
+    </div>
+    <ul class="cart-items" id="cart-items">
+      </ul>
+    <div class="cart-total">
+      Total: <span id="cart-total-price">$0.00</span>
+    </div>
+    <button class="checkout-btn">Pagar</button>
+  </div>
+
+  <footer>
+    &copy; 2025 Tienda de Camisetas. Todos los derechos reservados.
+  </footer>
+
+  <script>
+    // Tu código JavaScript irá aquí
+  </script>
+
+</body>
+</html>
